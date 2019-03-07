@@ -1,0 +1,8 @@
+### Tech plan and milestones
+9/10
+
+Please make repo public and move everything to the wiki. I would avoid leaving the matching algorithm to the end,
+as you want to have that ironed out so you can show how different inputs will change the output in your algorithm.
+Make sure to leave room for things that go wrong or things that take longer than expected. Regardless of what you
+accomplish milestone wise, make sure you have a working demo for the business plan competition. Split up your plan
+into target and reach milestones, so that you can have a mvp working asap.
