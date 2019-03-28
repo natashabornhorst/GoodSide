@@ -1,12 +1,8 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, Button } from 'react-native';
-import { ExpoLinksView } from '@expo/samples';
+import { ScrollView, StyleSheet, Text, Button, View, AppRegistry, Image, TouchableOpacity } from 'react-native';
 import { Google } from 'expo';
 
-export default class LinksScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Links',
-  };
+export default class Login extends React.Component {
 
   async signInWithGoogleAsync() {
     const clientId = '79508075920-ljds2o8adcjbh3qrsu477jiie951dd1g.apps.googleusercontent.com';
@@ -21,18 +17,56 @@ export default class LinksScreen extends React.Component {
 
   render() {
     return (
-      <ScrollView style={styles.container}>
-        <Button onPress={this.signInWithGoogleAsync.bind(this)}
-                title='Google Sign In'/>
-      </ScrollView>
+      <View style={{flex: 1}}>
+        <View style={styles.top}>
+          <Image
+            source={require('../assets/images/GoodSideLogo.png')}
+            style={styles.image}
+          />
+        </View>
+        <View style={styles.bottom}>
+          <TouchableOpacity 
+            onPress={this.signInWithGoogleAsync.bind(this)}
+            style={styles.button}>
+            <Text style={styles.text}> Sign In </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     );
   }
 }
+AppRegistry.registerComponent('GoodSide', () => FlexDimensionsBasics);
+AppRegistry.registerComponent('GoodSide', () => DisplayAnImage);
+AppRegistry.registerComponent('GoodSide', () => JustifyContentBasics);
 
 const styles = StyleSheet.create({
-  container: {
+  top: {
     flex: 1,
-    paddingTop: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8cc1f',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+  bottom: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    flex: 1,
+    width: 300,
+    height: 300,
+    resizeMode: 'contain',
+  },
+  button: {
+    backgroundColor: '#f8cc1f',
+    width: 300,
+    height: 50,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+  }
 });
