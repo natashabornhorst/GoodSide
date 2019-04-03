@@ -1,4 +1,5 @@
 import React from 'react';
+import { Google } from 'expo';
 import {
   Image,
   Platform,
@@ -7,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Button
 } from 'react-native';
 import { WebBrowser } from 'expo';
 
@@ -16,6 +18,15 @@ export default class HomeScreen extends React.Component {
   static navigationOptions = {
     header: null,
   };
+
+
+  async signOutWithGoogleAsync() {
+    const clientId = '79508075920-ljds2o8adcjbh3qrsu477jiie951dd1g.apps.googleusercontent.com';
+    const accessToken = this.props.navigation.getParam('accessToken', 'defaultValue')
+    console.log('second:' + accessToken);
+    await Google.logOutAsync({ clientId, accessToken });
+
+  }
 
   render() {
     return (
@@ -42,7 +53,7 @@ export default class HomeScreen extends React.Component {
             </View>
 
             <Text style={styles.getStartedText}>
-              hellloooooo
+              hello
             </Text>
           </View>
 
@@ -52,6 +63,14 @@ export default class HomeScreen extends React.Component {
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        <View style={styles.bottom}>
+          <TouchableOpacity
+            onPress={this.signOutWithGoogleAsync.bind(this)} 
+            style={styles.button}>
+            <Text style={styles.text}> Sign Out </Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.tabBarInfoContainer}>
           <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
@@ -102,6 +121,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#f8cc1f',
+    width: 300,
+    height: 50,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+  },
+  bottom: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   developmentModeText: {
     marginBottom: 20,

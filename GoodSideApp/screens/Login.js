@@ -11,7 +11,6 @@ export default class Login extends React.Component {
     if (type === 'success') {
       /* `accessToken` is now valid and can be used to get data from the Google API with HTTP requests */
       this.props.navigation.navigate('Main');
-      console.log(user);
     }
   }
 
