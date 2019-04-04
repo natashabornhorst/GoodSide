@@ -16,43 +16,34 @@ const db = SQLite.openDatabase('db.db');
 
 export default class SignUpScreen extends React.Component {
   state = {
-    name: '',
-    username: '',
-    password: '',
-    confirmPassword: ''
+  	count: 1,
+  	bio: ''
   }
 
-  handleBio = (text) => {
-    this.setState({ bio: text })
-  }
-  handlePic = (text) => {
-    this.setState({ pic: text })
-  }
-
-  submit = (bio, pic) => {
-        // is text empty?
-    if (bio === null || bio === '') {
-      alert('Please enter a bio')
-      return false;
-    } else if (pic === null || pic === '') {
-      alert('Please choose a pic')
-      return false;
-    } 
-
+  increment = (num) => {
+  	console.log('num: ', num)
+    //print review:
     db.transaction(
       tx => {
-        tx.executeSql('insert into reviews (bio, pic) values (?, ?)', [bio, pic]);
-        tx.executeSql('select * from reviews', [], (_, { rows }) =>
-          console.log(JSON.stringify(rows))
-        );
+        tx.executeSql('select bio from reviews where id = ?', [num], (tx, results) => {
+          var length = results.rows.length;
+          console.log('length: ', length);
+          if (length > 0) {
+          	console.log('bio: ', JSON.stringify(results.rows.item(0)))
+          	this.setState({ bio: JSON.stringify(results.rows.item(0)) })
+          } else {
+            alert('No more reviews :(');
+          }
+        })
       },
       null,
       this.update
     );
-    this.props.navigation.navigate('Main');
+	this.setState(prevState => ({ count: prevState.count + 1 }));
   }
 
   componentDidMount() {
+    this.setState({ count: 1 })
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists reviews (id integer primary key not null, bio text, pic text);'
@@ -68,13 +59,12 @@ export default class SignUpScreen extends React.Component {
         </View>
 
         <View style={styles.bottom}>
-          <Input onChangeText = {this.handleBio} containerStyle={styles.inputField} shake={true} placeholder='bio' />
-          <Input onChangeText = {this.handlePic} containerStyle={styles.inputField} shake={true} placeholder='pic' />
-          <TouchableOpacity 
-            onPress = {() => this.submit(this.state.bio, this.state.pic)}
-            style={styles.button}>
-            <Text style={styles.text}> next </Text>
-          </TouchableOpacity>
+         	<Text>{this.state.bio}</Text>
+         	<TouchableOpacity 
+            	onPress = {() => this.increment(this.state.count)}
+            	style={styles.button}>
+            	<Text style={styles.text}> next </Text>
+         	</TouchableOpacity>
         </View>
       </View>
     );
