@@ -44,6 +44,7 @@ export default class SignUpScreen extends React.Component {
 
   componentDidMount() {
     this.setState({ count: 1 })
+    this.increment(this.state.count)
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists reviews (id integer primary key not null, bio text, pic text);'
