@@ -12,11 +12,14 @@ import {
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
+const db = SQLite.openDatabase('db.db');
+
 export default class SignUpScreen extends React.Component {
   state = {
     name: '',
     username: '',
     password: '',
+    confirmPassword: ''
   }
 
   handleName = (text) => {
@@ -28,16 +31,29 @@ export default class SignUpScreen extends React.Component {
   handlePassword = (text) => {
     this.setState({ password: text })
   }
+  handleConfirmPassword = (text) => {
+    this.setState({ confirmPassword: text })
+  }
 
-  signup = (name, username, password) => {
+  signup = (name, username, password, confirmPassword) => {
         // is text empty?
-    if (username === null || username === '' || password === null || password === '') {
+    if (name === null || name === '') {
+      alert('Please enter a full name')
+      return false;
+    } else if (username === null || username === '') {
+      alert('Please enter a username')
+      return false;
+    } else if (password === null || password === '') {
+      alert('Please enter a password')
+      return false;
+    } else if (password != confirmPassword) {
+      alert('Your passwords did not match')
       return false;
     }
 
     db.transaction(
       tx => {
-        tx.executeSql('insert into users (name, username, password) values (?, ?, ?)', [name, username, password]);
+        tx.executeSql('insert into users (username, password) values (?, ?)', [username, password]);
         tx.executeSql('select * from users', [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
@@ -51,7 +67,7 @@ export default class SignUpScreen extends React.Component {
   componentDidMount() {
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists users (id integer primary key not null, name text, username text, password text);'
+        'create table if not exists users (id integer primary key not null, username text, password text);'
       );
     });
   }
@@ -66,10 +82,10 @@ export default class SignUpScreen extends React.Component {
         <View style={styles.bottom}>
           <Input onChangeText = {this.handleName} containerStyle={styles.inputField} shake={true} placeholder='full name' />
           <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' />
-          <Input onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
-          <Input onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
+          <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
+          <Input secureTextEntry={true} onChangeText = {this.handleConfirmPassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
           <TouchableOpacity 
-            onPress = {() => this.signup(this.state.name, this.state.username, this.state.password)}
+            onPress = {() => this.signup(this.state.name, this.state.username, this.state.password, this.state.confirmPassword)}
             style={styles.button}>
             <Text style={styles.text}> sign up </Text>
           </TouchableOpacity>
