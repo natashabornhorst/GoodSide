@@ -16,6 +16,7 @@ const db = SQLite.openDatabase('db.db');
 
 export default class Login extends React.Component {
   state = {
+    name: '',
     username: '',
     password: '',
   }
@@ -25,24 +26,6 @@ export default class Login extends React.Component {
   }
   handlePassword = (text) => {
     this.setState({ password: text })
-  }
-
-  signup = (username, password) => {
-        // is text empty?
-    if (username === null || username === '' || password === null || password === '') {
-      return false;
-    }
-
-    db.transaction(
-      tx => {
-        tx.executeSql('insert into users (username, password) values (?, ?)', [username, password]);
-        tx.executeSql('select * from users', [], (_, { rows }) =>
-          console.log(JSON.stringify(rows))
-        );
-      },
-      null,
-      this.update
-    );
   }
 
   signin = (username, password) => {
@@ -61,7 +44,7 @@ export default class Login extends React.Component {
           var length = results.rows.length;
           console.log('length: ', length);
           if (length > 0) {
-            this.props.navigation.navigate('Main');
+            this.props.navigation.navigate('Main', {name: 'Natasha'});
           } else {
             alert('Wrong username or password');
           }
@@ -75,7 +58,7 @@ export default class Login extends React.Component {
   componentDidMount() {
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists users (id integer primary key not null, username text, password text);'
+        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
       );
     });
   }

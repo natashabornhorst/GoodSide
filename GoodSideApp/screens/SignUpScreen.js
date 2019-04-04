@@ -53,7 +53,7 @@ export default class SignUpScreen extends React.Component {
 
     db.transaction(
       tx => {
-        tx.executeSql('insert into users (username, password) values (?, ?)', [username, password]);
+        tx.executeSql('insert into users (fullname, username, password) values (?, ?, ?)', [name, username, password]);
         tx.executeSql('select * from users', [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
@@ -67,7 +67,7 @@ export default class SignUpScreen extends React.Component {
   componentDidMount() {
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists users (id integer primary key not null, username text, password text);'
+        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
       );
     });
   }

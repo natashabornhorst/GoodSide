@@ -19,16 +19,8 @@ export default class HomeScreen extends React.Component {
     header: null,
   };
 
-
-  async signOutWithGoogleAsync() {
-    const clientId = '79508075920-ljds2o8adcjbh3qrsu477jiie951dd1g.apps.googleusercontent.com';
-    const accessToken = this.props.navigation.getParam('accessToken', 'defaultValue')
-    console.log('second:' + accessToken);
-    await Google.logOutAsync({ clientId, accessToken });
-
-  }
-
   render() {
+    const name = this.props.navigation.getParam('name', 'no name');
     return (
       <View style={styles.container}>
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -44,66 +36,21 @@ export default class HomeScreen extends React.Component {
           </View>
 
           <View style={styles.getStartedContainer}>
-            {this._maybeRenderDevelopmentModeWarning()}
-
-            <Text style={styles.getStartedText}>Get started by opening</Text>
-
-            <View style={[styles.codeHighlightContainer, styles.homeScreenFilename]}>
-              <MonoText style={styles.codeHighlightText}>screens/HomeScreen.js</MonoText>
-            </View>
-
             <Text style={styles.getStartedText}>
-              hello
+              Welcome!
             </Text>
-          </View>
-
-          <View style={styles.helpContainer}>
-            <TouchableOpacity onPress={this._handleHelpPress} style={styles.helpLink}>
-              <Text style={styles.helpLinkText}>Help, it didn’t automatically reload!</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
 
         <View style={styles.bottom}>
           <TouchableOpacity
-            onPress={this.signOutWithGoogleAsync.bind(this)} 
+            onPress={() => this.props.navigation.navigate('Login')} 
             style={styles.button}>
             <Text style={styles.text}> Sign Out </Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.tabBarInfoContainer}>
-          <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
-
-          <View style={[styles.codeHighlightContainer, styles.navigationFilename]}>
-            <MonoText style={styles.codeHighlightText}>navigation/MainTabNavigator.js</MonoText>
-          </View>
-        </View>
       </View>
     );
-  }
-
-  _maybeRenderDevelopmentModeWarning() {
-    if (__DEV__) {
-      const learnMoreButton = (
-        <Text onPress={this._handleLearnMorePress} style={styles.helpLinkText}>
-          Learn more
-        </Text>
-      );
-
-      return (
-        <Text style={styles.developmentModeText}>
-          Development mode is enabled, your app will be slower but you can use useful development
-          tools. {learnMoreButton}
-        </Text>
-      );
-    } else {
-      return (
-        <Text style={styles.developmentModeText}>
-          You are not in development mode, your app will run at full speed.
-        </Text>
-      );
-    }
   }
 
   _handleLearnMorePress = () => {
