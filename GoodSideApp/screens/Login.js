@@ -1,17 +1,66 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, Button, View, AppRegistry, Image, TouchableOpacity } from 'react-native';
+import { Input, Icon } from 'react-native-elements'
+import { 
+  ScrollView, 
+  StyleSheet, 
+  Text, 
+  Button, 
+  View, 
+  AppRegistry, 
+  Image, 
+  TouchableOpacity } from 'react-native';
 import { Google } from 'expo';
+import { Constants, SQLite } from 'expo';
+
+const db = SQLite.openDatabase('db.db');
 
 export default class Login extends React.Component {
+  state = {
+    name: '',
+    username: '',
+    password: '',
+  }
 
-  async signInWithGoogleAsync() {
-    const clientId = '79508075920-ljds2o8adcjbh3qrsu477jiie951dd1g.apps.googleusercontent.com';
-    const { type, accessToken, user } = await Google.logInAsync({ clientId });
+  handleUsername = (text) => {
+    this.setState({ username: text })
+  }
+  handlePassword = (text) => {
+    this.setState({ password: text })
+  }
 
-    if (type === 'success') {
-      /* `accessToken` is now valid and can be used to get data from the Google API with HTTP requests */
-      this.props.navigation.navigate('Main');
+  signin = (username, password) => {
+        // is text empty?
+    if (username === null || username === '') {
+      alert('Please enter a username')
+      return false;
+    } else if (password === null || password === '') {
+      alert('Please enter a password')
+      return false;
     }
+
+    db.transaction(
+      tx => {
+        tx.executeSql('select * from users where username = ? and password = ?', [username, password], (tx, results) => {
+          var length = results.rows.length;
+          console.log('length: ', length);
+          if (length > 0) {
+            this.props.navigation.navigate('Main', {name: 'Natasha'});
+          } else {
+            alert('Wrong username or password');
+          }
+        })
+      },
+      null,
+      this.update
+    );
+  }
+
+  componentDidMount() {
+    db.transaction(tx => {
+      tx.executeSql(
+        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
+      );
+    });
   }
 
   render() {
@@ -23,11 +72,19 @@ export default class Login extends React.Component {
             style={styles.image}
           />
         </View>
+
         <View style={styles.bottom}>
+          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' rightIcon={{ type: 'font-awesome', name: 'envelope', color: '#f8cc1f' }}/>
+          <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' rightIcon={{ type: 'font-awesome', name: 'lock', color: '#f8cc1f', size: 30 }}/>
           <TouchableOpacity 
-            onPress={this.signInWithGoogleAsync.bind(this)}
+            onPress = {() => this.signin(this.state.username, this.state.password)}
             style={styles.button}>
-            <Text style={styles.text}> Sign In </Text>
+            <Text style={styles.text}> sign in </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress = {() => this.props.navigation.navigate('SignUp')}
+            style={styles.buttonWhite}>
+            <Text style={styles.textYellow}> sign up </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -51,6 +108,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  inputField: {
+    marginBottom: 30,
+  },
   image: {
     flex: 1,
     width: 300,
@@ -64,8 +124,23 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 20
+  },
+  buttonWhite: {
+    backgroundColor: '#fff',
+    width: 300,
+    height: 50,
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#f8cc1f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20
   },
   text: {
     color: '#fff',
-  }
+  },
+  textYellow: {
+    color: '#f8cc1f',
+  },
 });

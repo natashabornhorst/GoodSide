@@ -22,40 +22,52 @@ export default class SignUpScreen extends React.Component {
     confirmPassword: ''
   }
 
-  handleBio = (text) => {
-    this.setState({ bio: text })
+  handleName = (text) => {
+    this.setState({ name: text })
   }
-  handlePic = (text) => {
-    this.setState({ pic: text })
+  handleUsername = (text) => {
+    this.setState({ username: text })
+  }
+  handlePassword = (text) => {
+    this.setState({ password: text })
+  }
+  handleConfirmPassword = (text) => {
+    this.setState({ confirmPassword: text })
   }
 
-  submit = (bio, pic) => {
+  signup = (name, username, password, confirmPassword) => {
         // is text empty?
-    if (bio === null || bio === '') {
-      alert('Please enter a bio')
+    if (name === null || name === '') {
+      alert('Please enter a full name')
       return false;
-    } else if (pic === null || pic === '') {
-      alert('Please choose a pic')
+    } else if (username === null || username === '') {
+      alert('Please enter a username')
       return false;
-    } 
+    } else if (password === null || password === '') {
+      alert('Please enter a password')
+      return false;
+    } else if (password != confirmPassword) {
+      alert('Your passwords did not match')
+      return false;
+    }
 
     db.transaction(
       tx => {
-        tx.executeSql('insert into reviews (bio, pic) values (?, ?)', [bio, pic]);
-        tx.executeSql('select * from reviews', [], (_, { rows }) =>
+        tx.executeSql('insert into users (fullname, username, password) values (?, ?, ?)', [name, username, password]);
+        tx.executeSql('select * from users', [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
       },
       null,
       this.update
     );
-    this.props.navigation.navigate('Main');
+    this.props.navigation.navigate('Login');
   }
 
   componentDidMount() {
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists reviews (id integer primary key not null, bio text, pic text);'
+        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
       );
     });
   }
@@ -64,16 +76,18 @@ export default class SignUpScreen extends React.Component {
     return (
       <View style={{flex: 1}}>
         <View style={styles.top}>
-            <Text style={styles.header}> submit review </Text>
+            <Text style={styles.header}> sign up </Text>
         </View>
 
         <View style={styles.bottom}>
-          <Input onChangeText = {this.handleBio} containerStyle={styles.inputField} shake={true} placeholder='bio' />
-          <Input onChangeText = {this.handlePic} containerStyle={styles.inputField} shake={true} placeholder='pic' />
+          <Input onChangeText = {this.handleName} containerStyle={styles.inputField} shake={true} placeholder='full name' />
+          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' />
+          <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
+          <Input secureTextEntry={true} onChangeText = {this.handleConfirmPassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
           <TouchableOpacity 
-            onPress = {() => this.submit(this.state.bio, this.state.pic)}
+            onPress = {() => this.signup(this.state.name, this.state.username, this.state.password, this.state.confirmPassword)}
             style={styles.button}>
-            <Text style={styles.text}> submit </Text>
+            <Text style={styles.text}> sign up </Text>
           </TouchableOpacity>
         </View>
       </View>
