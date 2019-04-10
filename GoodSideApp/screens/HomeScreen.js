@@ -10,11 +10,16 @@ import {
   View,
   Button,
   AsyncStorage } from 'react-native';
-import { WebBrowser } from 'expo';
+import { WebBrowser, Constants, SQLite } from 'expo';
 
 import { MonoText } from '../components/StyledText';
 
+const db = SQLite.openDatabase('db.db');
+
 export default class HomeScreen extends React.Component {
+  state = {
+    username: '',
+  }
   static navigationOptions = {
     header: null,
   };
@@ -25,11 +30,38 @@ export default class HomeScreen extends React.Component {
       if (value !== null) {
         // We have data!!
         console.log(value);
+        this.setState({ username: value})
       }
     } catch (error) {
       // Error retrieving data
     }
   } 
+
+  showReviews = () => {
+    db.transaction(
+      tx => {
+        tx.executeSql('select bio from reviews where username = ?', [this.state.username], (tx, results) => {
+          var length = results.rows.length;
+          console.log('length: ', length);
+          for (let i = 0; i < length; i++) {
+            console.log('bio: ', results.rows.item(i).bio)
+            this.setState({ bio: results.rows.item(i).bio })
+          }
+        })
+      },
+      null,
+      this.update
+    );
+  }
+
+  componentDidMount() {
+    this._retrieveData();
+    db.transaction(tx => {
+      tx.executeSql(
+        'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
+      );
+    });
+  }
 
   render() {
     const name = this.props.navigation.getParam('name', 'no name');
@@ -56,7 +88,7 @@ export default class HomeScreen extends React.Component {
 
         <View style={styles.bottom}>
           <TouchableOpacity
-            onPress={() => this._retrieveData()} 
+            onPress={() => this.showReviews()} 
             style={styles.button}>
             <Text style={styles.text}> show reviews </Text>
           </TouchableOpacity>
