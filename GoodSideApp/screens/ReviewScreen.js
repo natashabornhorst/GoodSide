@@ -15,12 +15,13 @@ import { Constants, SQLite } from 'expo';
 
 const db = SQLite.openDatabase('db.db');
 
-export default class SignUpScreen extends React.Component {
+export default class ReviewScreen extends React.Component {
   
   state = {
   	count: 1,
   	bio: '',
     bioReview: '',
+    username: ''
   }
 
   handleBioReview = (text) => {
@@ -49,12 +50,26 @@ export default class SignUpScreen extends React.Component {
 	this.setState(prevState => ({ count: prevState.count + 1 }));
   }
 
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('username');
+      if (value !== null) {
+        // We have data!!
+        console.log(value);
+        this.setState({ username: value})
+      }
+    } catch (error) {
+      // Error retrieving data
+    }
+  } 
+
   componentDidMount() {
+    this._retrieveData();
     this.setState({ count: 1 })
     this.increment(this.state.count)
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists reviews (id integer primary key not null, bio text, pic text);'
+        'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
       );
     });
   }

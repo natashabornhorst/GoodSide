@@ -8,8 +8,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Button
-} from 'react-native';
+  Button,
+  AsyncStorage } from 'react-native';
 import { WebBrowser } from 'expo';
 
 import { MonoText } from '../components/StyledText';
@@ -18,6 +18,18 @@ export default class HomeScreen extends React.Component {
   static navigationOptions = {
     header: null,
   };
+
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('username');
+      if (value !== null) {
+        // We have data!!
+        console.log(value);
+      }
+    } catch (error) {
+      // Error retrieving data
+    }
+  } 
 
   render() {
     const name = this.props.navigation.getParam('name', 'no name');
@@ -43,6 +55,11 @@ export default class HomeScreen extends React.Component {
         </ScrollView>
 
         <View style={styles.bottom}>
+          <TouchableOpacity
+            onPress={() => this._retrieveData()} 
+            style={styles.button}>
+            <Text style={styles.text}> show reviews </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
             style={styles.button}>

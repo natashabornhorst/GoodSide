@@ -8,7 +8,8 @@ import {
   View, 
   AppRegistry, 
   Image, 
-  TouchableOpacity } from 'react-native';
+  TouchableOpacity,
+  AsyncStorage } from 'react-native';
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
@@ -19,6 +20,14 @@ export default class Login extends React.Component {
     name: '',
     username: '',
     password: '',
+  }
+
+  _storeData = async (username) => {
+    try {
+      await AsyncStorage.setItem('username', username);
+    } catch (error) {
+      // Error saving data
+    }
   }
 
   handleUsername = (text) => {
@@ -57,6 +66,7 @@ export default class Login extends React.Component {
           var length = results.rows.length;
           console.log('length: ', length);
           if (length > 0) {
+            this._storeData(this.state.username);
             this.props.navigation.navigate('Home', { name: this.state.name });
           } else {
             alert('Wrong username or password');
