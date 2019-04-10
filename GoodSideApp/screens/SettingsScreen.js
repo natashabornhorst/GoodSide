@@ -8,16 +8,23 @@ import {
   View, 
   AppRegistry, 
   Image, 
-  TouchableOpacity } from 'react-native';
+  TouchableOpacity,
+  TouchableHighlight } from 'react-native';
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
 const db = SQLite.openDatabase('db.db');
 
 export default class SignUpScreen extends React.Component {
+  
   state = {
   	count: 1,
-  	bio: ''
+  	bio: '',
+    bioReview: '',
+  }
+
+  handleBioReview = (text) => {
+    this.setState({ bioReview: text })
   }
 
   increment = (num) => {
@@ -29,8 +36,8 @@ export default class SignUpScreen extends React.Component {
           var length = results.rows.length;
           console.log('length: ', length);
           if (length > 0) {
-          	console.log('bio: ', JSON.stringify(results.rows.item(0)))
-          	this.setState({ bio: JSON.stringify(results.rows.item(0)) })
+          	console.log('bio: ', results.rows.item(0).bio)
+          	this.setState({ bio: results.rows.item(0).bio })
           } else {
             alert('No more reviews :(');
           }
@@ -60,7 +67,10 @@ export default class SignUpScreen extends React.Component {
         </View>
 
         <View style={styles.bottom}>
-         	<Text>{this.state.bio}</Text>
+          <Text style={styles.title}>bio:</Text>
+          <Text style={styles.bio}>{this.state.bio}</Text>
+          <Text style={styles.title}>please give feedback on this bio:</Text>
+            <Input onChangeText = {this.handleBioReview} containerStyle={styles.inputField} shake={true} placeholder='start typing...' />
          	<TouchableOpacity 
             	onPress = {() => this.increment(this.state.count)}
             	style={styles.button}>
@@ -91,6 +101,7 @@ const styles = StyleSheet.create({
   },
   inputField: {
     marginBottom: 30,
+    marginTop: 20
   },
   button: {
     backgroundColor: '#f8cc1f',
@@ -99,17 +110,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20
+    margin: 20
   },
   buttonWhite: {
     backgroundColor: '#fff',
-    width: 300,
-    height: 50,
+    width: 100,
+    height: 40,
     borderRadius: 20,
     borderWidth: 0.5,
     borderColor: '#f8cc1f',
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 10,
+    marginRight: 10,
     marginTop: 20
   },
   text: {
@@ -118,6 +131,17 @@ const styles = StyleSheet.create({
   header: {
     color: '#fff',
     fontSize: 30
+  },
+  title: {
+    fontSize: 20,
+    marginTop: 20,
+  },
+  bio: {
+    borderRadius: 20,
+    borderWidth: 0.2,
+    borderColor: '#c4c7ce',
+    marginTop: 20,
+    padding: 15,
   },
   textYellow: {
     color: '#f8cc1f',

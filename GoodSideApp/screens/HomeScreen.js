@@ -37,7 +37,7 @@ export default class HomeScreen extends React.Component {
 
           <View style={styles.getStartedContainer}>
             <Text style={styles.getStartedText}>
-              Welcome!
+              {name}
             </Text>
           </View>
         </ScrollView>
