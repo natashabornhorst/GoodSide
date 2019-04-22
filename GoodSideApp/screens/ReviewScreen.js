@@ -9,7 +9,8 @@ import {
   AppRegistry, 
   Image, 
   TouchableOpacity,
-  TouchableHighlight } from 'react-native';
+  TouchableHighlight,
+  AsyncStorage } from 'react-native';
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
@@ -18,8 +19,8 @@ const db = SQLite.openDatabase('db.db');
 export default class ReviewScreen extends React.Component {
   
   state = {
-  	count: 1,
-  	bio: '',
+    count: 1,
+    bio: '',
     bioReview: '',
     username: ''
   }
@@ -29,16 +30,31 @@ export default class ReviewScreen extends React.Component {
   }
 
   increment = (num) => {
-  	console.log('num: ', num)
+    console.log('num: ', num)
+
+    //save bio review
+    db.transaction(
+      tx => {
+        tx.executeSql('insert into feedback (username, bioreview) values (?, ?)', [this.state.username, this.state.bioReview]);
+        tx.executeSql('select * from feedback', [], (_, { rows }) =>
+          console.log(JSON.stringify(rows))
+        );
+      },
+      null,
+      this.update
+    );
+
     //print review:
     db.transaction(
       tx => {
-        tx.executeSql('select bio from reviews where id = ?', [num], (tx, results) => {
+        tx.executeSql('select * from reviews where id = ?', [num], (tx, results) => {
           var length = results.rows.length;
           console.log('length: ', length);
           if (length > 0) {
-          	console.log('bio: ', results.rows.item(0).bio)
-          	this.setState({ bio: results.rows.item(0).bio })
+            console.log('bio: ', results.rows.item(0).bio)
+            console.log('username from review: ', results.rows.item(0).username)
+            this.setState({ bio: results.rows.item(0).bio })
+            this.setState({ username: results.rows.item(0).username})
           } else {
             alert('No more reviews :(');
           }
@@ -47,29 +63,18 @@ export default class ReviewScreen extends React.Component {
       null,
       this.update
     );
-	this.setState(prevState => ({ count: prevState.count + 1 }));
+  this.setState(prevState => ({ count: prevState.count + 1 }));
   }
 
-  _retrieveData = async () => {
-    try {
-      const value = await AsyncStorage.getItem('username');
-      if (value !== null) {
-        // We have data!!
-        console.log(value);
-        this.setState({ username: value})
-      }
-    } catch (error) {
-      // Error retrieving data
-    }
-  } 
-
   componentDidMount() {
-    this._retrieveData();
     this.setState({ count: 1 })
     this.increment(this.state.count)
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
+      );
+      tx.executeSql(
+        'create table if not exists feedback (id integer primary key not null, username text, bioreview text);'
       );
     });
   }
@@ -86,11 +91,11 @@ export default class ReviewScreen extends React.Component {
           <Text style={styles.bio}>{this.state.bio}</Text>
           <Text style={styles.title}>please give feedback on this bio:</Text>
             <Input onChangeText = {this.handleBioReview} containerStyle={styles.inputField} shake={true} placeholder='start typing...' />
-         	<TouchableOpacity 
-            	onPress = {() => this.increment(this.state.count)}
-            	style={styles.button}>
-            	<Text style={styles.text}> next </Text>
-         	</TouchableOpacity>
+          <TouchableOpacity 
+              onPress = {() => this.increment(this.state.count)}
+              style={styles.button}>
+              <Text style={styles.text}> submit </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );

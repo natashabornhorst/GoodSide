@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Input, Icon } from 'react-native-elements'
 import {
   ActivityIndicator,
@@ -6,18 +6,26 @@ import {
   Clipboard,
   Image,
   Share,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ScrollView,  
-  AppRegistry, 
+  AppRegistry,
+  ScrollView
 } from 'react-native';
 import { Constants, ImagePicker, Permissions, SQLite } from 'expo';
+import uuid from 'uuid';
+import * as firebase from 'firebase';
+import Apikeys from '../global/Apikeys.js';
+
+console.disableYellowBox = true;
 
 const db = SQLite.openDatabase('db.db');
 
-export default class SignUpScreen extends React.Component {
+firebase.initializeApp(Apikeys.FirebaseConfig);
+
+export default class App extends React.Component {
   state = {
     image: null,
     uploading: false,
@@ -26,6 +34,7 @@ export default class SignUpScreen extends React.Component {
     password: '',
     confirmPassword: '',
   };
+
 
   handleName = (text) => {
     this.setState({ name: text })
@@ -56,6 +65,15 @@ export default class SignUpScreen extends React.Component {
       return false;
     }
 
+    firebase.database().ref('users/' + username).set({
+      name: name
+    });
+
+    firebase.database().ref('users/' + username).on('value', (snapshot) => {
+      const name = snapshot.val().name;
+      console.log("New name: " + name);
+    });
+
     db.transaction(
       tx => {
         tx.executeSql('insert into users (fullname, username, password) values (?, ?, ?)', [name, username, password]);
@@ -68,8 +86,10 @@ export default class SignUpScreen extends React.Component {
     );
     this.props.navigation.navigate('Login');
   }
-
-  componentDidMount() {
+  
+  async componentDidMount() {
+    await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    await Permissions.askAsync(Permissions.CAMERA);
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
@@ -78,9 +98,7 @@ export default class SignUpScreen extends React.Component {
   }
 
   render() {
-    let {
-      image
-    } = this.state;
+    let { image } = this.state;
 
     return (
       <View style={{flex: 1}}>
@@ -89,6 +107,7 @@ export default class SignUpScreen extends React.Component {
         </View>
 
         <View style={styles.bottom}>
+          <ScrollView>
           <Input onChangeText = {this.handleName} containerStyle={styles.inputField} shake={true} placeholder='full name' />
           <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' />
           <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
@@ -102,6 +121,7 @@ export default class SignUpScreen extends React.Component {
             style={styles.button}>
             <Text style={styles.text}> sign up </Text>
           </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
     );
@@ -111,102 +131,110 @@ export default class SignUpScreen extends React.Component {
     if (this.state.uploading) {
       return (
         <View
-          style={[StyleSheet.absoluteFill, styles.maybeRenderUploading]}>
-          <ActivityIndicator color="#fff" size="large" />
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}>
+          <ActivityIndicator color="#fff" animating size="large" />
         </View>
       );
     }
   };
 
   _maybeRenderImage = () => {
-    let {
-      image
-    } = this.state;
-
+    let { image } = this.state;
     if (!image) {
       return;
     }
 
     return (
       <View
-        style={styles.maybeRenderContainer}>
+        style={{
+          marginTop: 30,
+          width: 250,
+          borderRadius: 3,
+          elevation: 2,
+        }}>
         <View
-          style={styles.maybeRenderImageContainer}>
-          <Image source={{ uri: image }} style={styles.maybeRenderImage} />
+          style={{
+            borderTopRightRadius: 3,
+            borderTopLeftRadius: 3,
+            shadowColor: 'rgba(0,0,0,1)',
+            shadowOpacity: 0.2,
+            shadowOffset: { width: 4, height: 4 },
+            shadowRadius: 5,
+            overflow: 'hidden',
+          }}>
+          <Image source={{ uri: image }} style={{ width: 250, height: 250 }} />
         </View>
+
+        <Text
+          onPress={this._copyToClipboard}
+          onLongPress={this._share}
+          style={{ paddingVertical: 10, paddingHorizontal: 10 }}>
+          {image}
+        </Text>
       </View>
     );
   };
 
-
   _pickImage = async () => {
-    const {
-      status: cameraRollPerm
-    } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    let pickerResult = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+    });
 
-    // only if user allows permission to camera roll
-    if (cameraRollPerm === 'granted') {
-      let pickerResult = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
-      });
-
-      this._handleImagePicked(pickerResult);
-    }
+    this._handleImagePicked(pickerResult);
   };
 
   _handleImagePicked = async pickerResult => {
-    let uploadResponse, uploadResult;
-
     try {
-      this.setState({
-        uploading: true
-      });
+      this.setState({ uploading: true });
 
       if (!pickerResult.cancelled) {
-        uploadResponse = await uploadImageAsync(pickerResult.uri);
-        uploadResult = await uploadResponse.json();
-
-        this.setState({
-          image: uploadResult.location
-        });
+        uploadUrl = await uploadImageAsync(pickerResult.uri);
+        this.setState({ image: uploadUrl });
       }
     } catch (e) {
-      console.log({ uploadResponse });
-      console.log({ uploadResult });
-      console.log({ e });
+      console.log(e);
       alert('Upload failed, sorry :(');
     } finally {
-      this.setState({
-        uploading: false
-      });
+      this.setState({ uploading: false });
     }
   };
 }
 
 async function uploadImageAsync(uri) {
-  let apiUrl = 'http://goodsidebucket.s3.amazonaws.com';
-
-  let uriParts = uri.split('.');
-  let fileType = uriParts[uriParts.length - 1];
-
-  let formData = new FormData();
-  formData.append('photo', {
-    uri,
-    name: `photo.${fileType}`,
-    type: `image/${fileType}`,
+  // Why are we using XMLHttpRequest? See:
+  // https://github.com/expo/expo/issues/2402#issuecomment-443726662
+  const blob = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function(e) {
+      console.log(e);
+      reject(new TypeError('Network request failed'));
+    };
+    xhr.responseType = 'blob';
+    xhr.open('GET', uri, true);
+    xhr.send(null);
   });
 
-  let options = {
-    method: 'POST',
-    body: formData,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'multipart/form-data',
-    },
-  };
+  const ref = firebase
+    .storage()
+    .ref()
+    .child(uuid.v4());
+  const snapshot = await ref.put(blob);
 
-  return fetch(apiUrl, options);
+  // We're done with the blob, close and release it
+  blob.close();
+
+  return await snapshot.ref.getDownloadURL();
 }
 
 AppRegistry.registerComponent('GoodSide', () => FlexDimensionsBasics);
