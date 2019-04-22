@@ -8,7 +8,8 @@ import {
   View, 
   AppRegistry, 
   Image, 
-  TouchableOpacity } from 'react-native';
+  TouchableOpacity,
+  AsyncStorage } from 'react-native';
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
@@ -19,6 +20,14 @@ export default class Login extends React.Component {
     name: '',
     username: '',
     password: '',
+  }
+
+  _storeData = async (username) => {
+    try {
+      await AsyncStorage.setItem('username', username);
+    } catch (error) {
+      // Error saving data
+    }
   }
 
   handleUsername = (text) => {
@@ -40,11 +49,25 @@ export default class Login extends React.Component {
 
     db.transaction(
       tx => {
+        tx.executeSql('select fullname from users where username = ?', [username], (tx, results) => {
+          var length = results.rows.length;
+          console.log('length: ', length);
+          if (length > 0) {
+            console.log('name: ', results.rows.item(0).fullname)
+            this.setState({ name: results.rows.item(0).fullname })
+          } else {
+            alert('User not found');
+          }
+        });
+        tx.executeSql('select * from users', [], (_, { rows }) =>
+          console.log(JSON.stringify(rows))
+        );
         tx.executeSql('select * from users where username = ? and password = ?', [username, password], (tx, results) => {
           var length = results.rows.length;
           console.log('length: ', length);
           if (length > 0) {
-            this.props.navigation.navigate('Main', {name: 'Natasha'});
+            this._storeData(this.state.username);
+            this.props.navigation.navigate('Home', { name: this.state.name });
           } else {
             alert('Wrong username or password');
           }
@@ -56,6 +79,7 @@ export default class Login extends React.Component {
   }
 
   componentDidMount() {
+
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'

@@ -8,13 +8,14 @@ import {
   View, 
   AppRegistry, 
   Image, 
-  TouchableOpacity } from 'react-native';
+  TouchableOpacity,
+  AsyncStorage } from 'react-native';
 import { Google } from 'expo';
 import { Constants, SQLite } from 'expo';
 
 const db = SQLite.openDatabase('db.db');
 
-export default class SignUpScreen extends React.Component {
+export default class SubmitReviewScreen extends React.Component {
   state = {
     name: '',
     username: '',
@@ -41,7 +42,7 @@ export default class SignUpScreen extends React.Component {
 
     db.transaction(
       tx => {
-        tx.executeSql('insert into reviews (bio, pic) values (?, ?)', [bio, pic]);
+        tx.executeSql('insert into reviews (bio, pic, username) values (?, ?, ?)', [bio, pic, this.state.username]);
         tx.executeSql('select * from reviews', [], (_, { rows }) =>
           console.log(JSON.stringify(rows))
         );
@@ -52,10 +53,24 @@ export default class SignUpScreen extends React.Component {
     this.props.navigation.navigate('Main');
   }
 
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('username');
+      if (value !== null) {
+        // We have data!!
+        console.log(value);
+        this.setState({ username: value})
+      }
+    } catch (error) {
+      // Error retrieving data
+    }
+  } 
+
   componentDidMount() {
+    this._retrieveData();
     db.transaction(tx => {
       tx.executeSql(
-        'create table if not exists reviews (id integer primary key not null, bio text, pic text);'
+        'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
       );
     });
   }
