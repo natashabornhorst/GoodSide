@@ -11,11 +11,11 @@ import {
   Button,
   AsyncStorage,
   FlatList } from 'react-native';
-import { WebBrowser, Constants, SQLite } from 'expo';
+import { WebBrowser, Constants } from 'expo';
+import firebase from '../global/Firebase.js';
 
 import { MonoText } from '../components/StyledText';
 
-const db = SQLite.openDatabase('db.db');
 
 export default class HomeScreen extends React.Component {
   state = {
@@ -31,8 +31,8 @@ export default class HomeScreen extends React.Component {
       const value = await AsyncStorage.getItem('username');
       if (value !== null) {
         // We have data!!
-        console.log(value);
         this.setState({ username: value})
+        console.log("this.sate.username: ", this.state.username);
       }
     } catch (error) {
       // Error retrieving data
@@ -40,40 +40,23 @@ export default class HomeScreen extends React.Component {
   } 
 
   showReviews = () => {
-    db.transaction(
-      tx => {
-        tx.executeSql('select bioreview from feedback where username = ?', [this.state.username], (tx, results) => {
-          var temp = [];
-          var length = results.rows.length;
-          console.log('length: ', length);
-          for (let i = 0; i < length; i++) {
-            console.log('bio review: ', results.rows.item(i).bioreview)
-            temp.push(results.rows.item(i));
-          }
-          this.setState({
-            bioreviews: temp,
-          });
-        })
-      },
-      null,
-      this.update
+    var feedback;
+
+    firebase.database().ref('profiles/' + this.state.username).on('value', (snapshot) => {
+        feedback = snapshot.val().feedback;
+    });
+
+    return (
+      <Text> { feedback } </Text>
     );
+
   }
 
   componentDidMount() {
     this._retrieveData();
-    db.transaction(tx => {
-      tx.executeSql(
-        'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
-      );
-      tx.executeSql(
-        'create table if not exists feedback (id integer primary key not null, username text, bioreview text);'
-      );
-    });
   }
 
   render() {
-    const name = this.props.navigation.getParam('name', 'no name');
     return (
       <View style={styles.container}>
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -90,27 +73,13 @@ export default class HomeScreen extends React.Component {
 
           <View style={styles.getStartedContainer}>
             <Text style={styles.getStartedText}>
-              {name}
+              Welcome, {this.state.username} !
             </Text>
           </View>
         </ScrollView>
 
         <View style={styles.bottom}>
-          <TouchableOpacity
-            onPress={() => this.showReviews()} 
-            style={styles.button}>
-            <Text style={styles.text}> show reviews </Text>
-          </TouchableOpacity>
-          <FlatList
-            data={this.state.bioreviews}
-            ItemSeparatorComponent={this.ListViewItemSeparator}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View key={item.user_id} style={{ backgroundColor: 'white', padding: 20 }}>
-                <Text>review: {item.bioreview}</Text>
-              </View>
-            )}
-          />
+          { this.showReviews() }
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
             style={styles.button}>

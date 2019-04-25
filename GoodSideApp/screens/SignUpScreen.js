@@ -14,16 +14,11 @@ import {
   AppRegistry,
   ScrollView
 } from 'react-native';
-import { Constants, ImagePicker, Permissions, SQLite } from 'expo';
+import { Constants, ImagePicker, Permissions } from 'expo';
 import uuid from 'uuid';
-import * as firebase from 'firebase';
-import Apikeys from '../global/Apikeys.js';
+import firebase from '../global/Firebase.js';
 
 console.disableYellowBox = true;
-
-const db = SQLite.openDatabase('db.db');
-
-firebase.initializeApp(Apikeys.FirebaseConfig);
 
 export default class App extends React.Component {
   state = {
@@ -65,36 +60,19 @@ export default class App extends React.Component {
       return false;
     }
 
-    firebase.database().ref('users/' + username).set({
-      name: name
-    });
-
     firebase.database().ref('users/' + username).on('value', (snapshot) => {
-      const name = snapshot.val().name;
-      console.log("New name: " + name);
-    });
+      firebase.database().ref('users/' + username).set({
+        name: name,
+        password: password
+      });
 
-    db.transaction(
-      tx => {
-        tx.executeSql('insert into users (fullname, username, password) values (?, ?, ?)', [name, username, password]);
-        tx.executeSql('select * from users', [], (_, { rows }) =>
-          console.log(JSON.stringify(rows))
-        );
-      },
-      null,
-      this.update
-    );
-    this.props.navigation.navigate('Login');
+      this.props.navigation.navigate('Login');
+    });
   }
   
   async componentDidMount() {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
     await Permissions.askAsync(Permissions.CAMERA);
-    db.transaction(tx => {
-      tx.executeSql(
-        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
-      );
-    });
   }
 
   render() {
