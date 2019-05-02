@@ -43,7 +43,12 @@ export default class HomeScreen extends React.Component {
     var feedback;
 
     firebase.database().ref('profiles/' + this.state.username).on('value', (snapshot) => {
-        feedback = snapshot.val().feedback;
+
+        if (snapshot.val() != null) {
+          feedback = snapshot.val().feedback;
+        } else {
+          feedback = "no feedback yet :("
+        }
     });
 
     return (

@@ -24,7 +24,7 @@ const LinksStack = createStackNavigator({
 });
 
 LinksStack.navigationOptions = {
-  tabBarLabel: 'Submit Review',
+  tabBarLabel: 'Request Review',
   tabBarIcon: ({ focused }) => (
     <Icon type='font-awesome' name='share' color='#c4c7ce'/>
   ),

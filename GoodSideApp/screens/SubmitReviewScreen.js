@@ -90,12 +90,13 @@ export default class SubmitReviewScreen extends React.Component {
 
     return (
       <View style={{flex: 1}}>
-        <ScrollView>
-          <View style={styles.top}>
-              <Text style={styles.header}> submit review </Text>
-          </View>
+        <View style={styles.top}>
+            <Text style={styles.header}> request review </Text>
+        </View>
 
-          <View style={styles.bottom}>
+        <View style={styles.bottom}>
+          <ScrollView>
+            <View style={{ height: 40, width: 400 }}/>
             <Input onChangeText = {this.handleBio} containerStyle={styles.inputField} shake={true} placeholder='bio' />
             <Text> upload a picture </Text>
             <Icon type='font-awesome' name='upload' onPress={this._pickImage} color='#f8cc1f'/>
@@ -106,8 +107,8 @@ export default class SubmitReviewScreen extends React.Component {
               style={styles.button}>
               <Text style={styles.text}> submit </Text>
             </TouchableOpacity>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
     );
   }
