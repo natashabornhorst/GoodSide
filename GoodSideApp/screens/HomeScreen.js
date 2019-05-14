@@ -11,16 +11,18 @@ import {
   Button,
   AsyncStorage,
   FlatList } from 'react-native';
-import { WebBrowser, Constants, SQLite } from 'expo';
+import { WebBrowser, Constants } from 'expo';
+import firebase from '../global/Firebase.js';
 
 import { MonoText } from '../components/StyledText';
 
-const db = SQLite.openDatabase('db.db');
 
 export default class HomeScreen extends React.Component {
   state = {
     username: '',
     bioreviews: [],
+    image: null,
+    name: ''
   }
   static navigationOptions = {
     header: null,
@@ -31,95 +33,133 @@ export default class HomeScreen extends React.Component {
       const value = await AsyncStorage.getItem('username');
       if (value !== null) {
         // We have data!!
-        console.log(value);
         this.setState({ username: value})
+        console.log("this.state.username: ", this.state.username);
       }
+      firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
+        const image = snapshot.val().image;
+        const name = snapshot.val().name;
+        this.setState({ image: image});
+        this.setState({ name: name})
+      });
+
     } catch (error) {
       // Error retrieving data
     }
   } 
 
   showReviews = () => {
-    db.transaction(
-      tx => {
-        tx.executeSql('select bioreview from feedback where username = ?', [this.state.username], (tx, results) => {
-          var temp = [];
-          var length = results.rows.length;
-          console.log('length: ', length);
-          for (let i = 0; i < length; i++) {
-            console.log('bio review: ', results.rows.item(i).bioreview)
-            temp.push(results.rows.item(i));
-          }
-          this.setState({
-            bioreviews: temp,
-          });
-        })
-      },
-      null,
-      this.update
+    var feedback;
+
+    firebase.database().ref('profiles/' + this.state.username).on('value', (snapshot) => {
+
+        if (snapshot.val() != null) {
+          feedback = snapshot.val().feedback;
+        } else {
+          feedback = "no feedback yet :("
+        }
+    });
+
+    return (
+      <Text> { feedback } </Text>
     );
+
+  }
+
+  showPoints = () => {
+    var points;
+
+    firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
+
+        if (snapshot.val() != null) {
+          points = snapshot.val().points;
+          console.log("points: ", points);
+        } else {
+          points = 0;
+        }
+    });
+
+    return (
+      <Text style={styles.pText}> Points: {points} </Text>
+    );
+
   }
 
   componentDidMount() {
     this._retrieveData();
-    db.transaction(tx => {
-      tx.executeSql(
-        'create table if not exists reviews (id integer primary key not null, username text, bio text, pic text);'
-      );
-      tx.executeSql(
-        'create table if not exists feedback (id integer primary key not null, username text, bioreview text);'
-      );
-    });
   }
 
   render() {
-    const name = this.props.navigation.getParam('name', 'no name');
+    let { image } = this.state;
     return (
       <View style={styles.container}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.welcomeContainer}>
-            <Image
-              source={
-                __DEV__
-                  ? require('../assets/images/robot-dev.png')
-                  : require('../assets/images/robot-prod.png')
-              }
-              style={styles.welcomeImage}
-            />
+        <View style={{
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          alignItems: 'stretch',}}>
+          <View style={{marginLeft: 100, marginTop: 50}}>
+            {this._maybeRenderImage()}
           </View>
 
           <View style={styles.getStartedContainer}>
-            <Text style={styles.getStartedText}>
-              {name}
+            <Text style={styles.headerText}>
+              {this.state.name}
             </Text>
           </View>
-        </ScrollView>
-
+        </View>
+        { this.showPoints() }
         <View style={styles.bottom}>
           <TouchableOpacity
-            onPress={() => this.showReviews()} 
+            onPress={() => this.showReviews()}
             style={styles.button}>
-            <Text style={styles.text}> show reviews </Text>
+            <Text style={styles.text}> See Reviews </Text>
           </TouchableOpacity>
-          <FlatList
-            data={this.state.bioreviews}
-            ItemSeparatorComponent={this.ListViewItemSeparator}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View key={item.user_id} style={{ backgroundColor: 'white', padding: 20 }}>
-                <Text>review: {item.bioreview}</Text>
-              </View>
-            )}
-          />
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
-            style={styles.button}>
-            <Text style={styles.text}> Sign Out </Text>
+            style={styles.buttonWhite}>
+            <Text style={styles.textYellow}> Sign Out </Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
+
+
+  _maybeRenderImage = () => {
+    let { image } = this.state;
+    if (!image) {
+      return;
+    }
+
+    return (
+      <View
+        style={{
+          marginTop: 30,
+          width: 250,
+          borderRadius: 3,
+          elevation: 2,
+        }}>
+        <View
+          style={{
+            borderTopRightRadius: 3,
+            borderTopLeftRadius: 3,
+            shadowColor: 'rgba(0,0,0,1)',
+            shadowOpacity: 0.2,
+            shadowOffset: { width: 4, height: 4 },
+            shadowRadius: 5,
+            overflow: 'hidden',
+          }}>
+          <Image source={{ uri: image }} style={{width: 150, height: 150, borderRadius: 150/ 2}}  />
+        </View>
+
+        <Text
+          style={{ paddingVertical: 10, paddingHorizontal: 10 }}>
+        </Text>
+      </View>
+    );
+  };
 
   _handleLearnMorePress = () => {
     WebBrowser.openBrowserAsync('https://docs.expo.io/versions/latest/guides/development-mode');
@@ -144,6 +184,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 20
+  },
+  buttonWhite: {
+    backgroundColor: '#fff',
+    width: 300,
+    height: 50,
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#f8cc1f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20
   },
   text: {
     color: '#fff',
@@ -165,6 +217,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   welcomeContainer: {
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 20,
@@ -191,8 +244,14 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     paddingHorizontal: 4,
   },
-  getStartedText: {
-    fontSize: 17,
+  headerText: {
+    fontSize: 30,
+    color: 'rgba(96,100,109, 1)',
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+  pText: {
+    fontSize: 20,
     color: 'rgba(96,100,109, 1)',
     lineHeight: 24,
     textAlign: 'center',
@@ -235,5 +294,8 @@ const styles = StyleSheet.create({
   helpLinkText: {
     fontSize: 14,
     color: '#2e78b7',
+  },
+  textYellow: {
+    color: '#f8cc1f',
   },
 });

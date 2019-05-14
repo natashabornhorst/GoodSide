@@ -1,5 +1,6 @@
 import React from 'react';
-import { Input, Icon } from 'react-native-elements'
+import { Input, Icon, CheckBox } from 'react-native-elements'
+import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
 import {
   ActivityIndicator,
   Button,
@@ -14,16 +15,22 @@ import {
   AppRegistry,
   ScrollView
 } from 'react-native';
-import { Constants, ImagePicker, Permissions, SQLite } from 'expo';
+import { Constants, ImagePicker, Permissions } from 'expo';
 import uuid from 'uuid';
-import * as firebase from 'firebase';
-import Apikeys from '../global/Apikeys.js';
+import firebase from '../global/Firebase.js';
 
 console.disableYellowBox = true;
+var gender_props = [
+  {label: 'female', value: 0 },
+  {label: 'male', value: 1 },
+  {label: 'other', value: 2 },
+];
 
-const db = SQLite.openDatabase('db.db');
-
-firebase.initializeApp(Apikeys.FirebaseConfig);
+var gender_pref_props = [
+  {label: 'female', value: 0 },
+  {label: 'male', value: 1 },
+  {label: 'other', value: 2 },
+];
 
 export default class App extends React.Component {
   state = {
@@ -33,8 +40,9 @@ export default class App extends React.Component {
     username: '',
     password: '',
     confirmPassword: '',
+    gender: '',
+    targetGender: ''
   };
-
 
   handleName = (text) => {
     this.setState({ name: text })
@@ -65,36 +73,23 @@ export default class App extends React.Component {
       return false;
     }
 
-    firebase.database().ref('users/' + username).set({
-      name: name
-    });
-
     firebase.database().ref('users/' + username).on('value', (snapshot) => {
-      const name = snapshot.val().name;
-      console.log("New name: " + name);
-    });
+      firebase.database().ref('users/' + username).set({
+        name: name,
+        password: password,
+        points: 0,
+        image: this.state.image,
+        gender: this.state.gender,
+        targetGender: this.state.targetGender
+      });
 
-    db.transaction(
-      tx => {
-        tx.executeSql('insert into users (fullname, username, password) values (?, ?, ?)', [name, username, password]);
-        tx.executeSql('select * from users', [], (_, { rows }) =>
-          console.log(JSON.stringify(rows))
-        );
-      },
-      null,
-      this.update
-    );
-    this.props.navigation.navigate('Login');
+      this.props.navigation.navigate('Login');
+    });
   }
   
   async componentDidMount() {
     await Permissions.askAsync(Permissions.CAMERA_ROLL);
     await Permissions.askAsync(Permissions.CAMERA);
-    db.transaction(tx => {
-      tx.executeSql(
-        'create table if not exists users (id integer primary key not null, fullname text, username text, password text);'
-      );
-    });
   }
 
   render() {
@@ -109,9 +104,33 @@ export default class App extends React.Component {
         <View style={styles.bottom}>
           <ScrollView>
           <Input onChangeText = {this.handleName} containerStyle={styles.inputField} shake={true} placeholder='full name' />
-          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' />
+          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='username' />
           <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
           <Input secureTextEntry={true} onChangeText = {this.handleConfirmPassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
+          <View style={{marginBottom: 20, marginTop: 20}}>
+            <Text> What gender do you identify as? </Text>
+            <RadioForm
+              radio_props={gender_props}
+              initial={0}
+              formHorizontal={true}
+              labelHorizontal={true}
+              buttonColor={'#f8cc1f'}
+              selectedButtonColor={'#f8cc1f'}
+              onPress={(value) => {this.setState({gender:value})}}
+            />
+          </View>
+          <View style={{marginBottom: 20, marginTop: 20}}>
+            <Text> Who are you looking for? </Text>
+            <RadioForm
+              radio_props={gender_pref_props}
+              initial={0}
+              formHorizontal={true}
+              labelHorizontal={true}
+              buttonColor={'#f8cc1f'}
+              selectedButtonColor={'#f8cc1f'}
+              onPress={(value) => {this.setState({targetGender:value})}}
+            />
+          </View>
           <Text> upload a picture </Text>
           <Icon type='font-awesome' name='upload' onPress={this._pickImage} color='#f8cc1f'/>
           {this._maybeRenderImage()}
@@ -171,13 +190,6 @@ export default class App extends React.Component {
           }}>
           <Image source={{ uri: image }} style={{ width: 250, height: 250 }} />
         </View>
-
-        <Text
-          onPress={this._copyToClipboard}
-          onLongPress={this._share}
-          style={{ paddingVertical: 10, paddingHorizontal: 10 }}>
-          {image}
-        </Text>
       </View>
     );
   };
