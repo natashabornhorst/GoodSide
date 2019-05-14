@@ -63,7 +63,9 @@ export default class App extends React.Component {
     firebase.database().ref('users/' + username).on('value', (snapshot) => {
       firebase.database().ref('users/' + username).set({
         name: name,
-        password: password
+        password: password,
+        points: 0,
+        image: this.state.image
       });
 
       this.props.navigation.navigate('Login');
@@ -149,13 +151,6 @@ export default class App extends React.Component {
           }}>
           <Image source={{ uri: image }} style={{ width: 250, height: 250 }} />
         </View>
-
-        <Text
-          onPress={this._copyToClipboard}
-          onLongPress={this._share}
-          style={{ paddingVertical: 10, paddingHorizontal: 10 }}>
-          {image}
-        </Text>
       </View>
     );
   };

@@ -25,11 +25,11 @@ const db = SQLite.openDatabase('db.db');
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH = Dimensions.get('window').width
 const Users = [
-  { id: "1", text: "hot" },
-  { id: "2", text: "boring" },
-  { id: "3", text: "adventurous" },
-  { id: "4", text: "artsy" },
-  { id: "5", text: "fun" },
+  { id: "1", text: "fun" },
+  { id: "2", text: "smart" },
+  { id: "3", text: "funny" },
+  { id: "4", text: "cool" },
+  { id: "5", text: "artsy" },
 ]
 
 export default class ReviewScreen extends React.Component {
@@ -41,6 +41,8 @@ export default class ReviewScreen extends React.Component {
     username: '',
     image: null,
     uploading: false,
+    showReview: false,
+    userusername: ''
   }
 
 
@@ -127,17 +129,29 @@ export default class ReviewScreen extends React.Component {
     })
   }
 
-  renderUsers = () => {
-    console.log("currentIndex: ", this.state.currentIndex);
-    if (this.state.currentIndex > 4) {
-        return (
-          <TouchableOpacity 
-              onPress = {() => this.increment(this.state.count)}
-              style={styles.button}>
-              <Text style={styles.text}> next </Text>
-          </TouchableOpacity>   
-        );   
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('username');
+      if (value !== null) {
+        // We have data!!
+        this.setState({ userusername: value})
+        console.log("this.state.userusername: ", this.state.userusername);
       }
+    } catch (error) {
+      // Error retrieving data
+    }
+  } 
+
+  renderUsers = () => {
+    if (this.state.currentIndex > 4) {
+      return (
+        <TouchableOpacity 
+            onPress = {() => this.printReview(this.state.count)}
+            style={styles.button}>
+            <Text style={styles.text}> next </Text>
+        </TouchableOpacity>   
+      );   
+    }
 
     return Users.map((item, i) => {
       if (i < this.state.currentIndex) {
@@ -197,82 +211,82 @@ export default class ReviewScreen extends React.Component {
     this.setState({ bioReview: text })
   }
 
-  increment = (num) => {
-    console.log('num: ', num)
+  printReview = (num) => {
 
-    //save bio review
+    if (num != 1) {
+      var ref = firebase.database().ref('users/' + this.state.userusername + '/points');
+      ref.transaction(function(currentPoints) {
+        return (currentPoints || 0) + 100;
+      });
+    }
+      db.transaction(
+        tx => {
+          tx.executeSql('select * from reviews where id = ?', [num], (tx, results) => {
+            var length = results.rows.length;
+            console.log('length: ', length);
+            if (length > 0) {
 
-    //print review:
-    db.transaction(
-      tx => {
-        tx.executeSql('select * from reviews where id = ?', [num], (tx, results) => {
-          var length = results.rows.length;
-          console.log('length: ', length);
-          if (length > 0) {
+              const reviewUsername = results.rows.item(0).username;
+              console.log("reviewUsername: ", reviewUsername);
 
-            const reviewUsername = results.rows.item(0).username;
-
-            firebase.database().ref('profiles/' + reviewUsername).on('value', (snapshot) => {
-              const bio = snapshot.val().bio;
-              const image = snapshot.val().image;
-              this.setState({ bio: bio });
-              this.setState({ image: image});
-              this.setState({ username: reviewUsername});
-            });
-          } else {
-            alert('No more reviews :(');
-          }
-        })
-      },
-      null,
-      this.update
-    );
-  this.setState(prevState => ({ count: prevState.count + 1 }));              
-  this.setState({ currentIndex: 0 });
-
+              firebase.database().ref('profiles/' + reviewUsername).on('value', (snapshot) => {
+                const bio = snapshot.val().bio;
+                const image = snapshot.val().image;
+                this.setState({ bio: bio });
+                this.setState({ image: image});
+                this.setState({ username: reviewUsername});
+              });
+            } else {
+              alert('No more reviews :(');
+            }
+          })
+        },
+        null,
+        this.update
+      );
+      this.setState({ count: num + 1 });              
+      this.setState({ currentIndex: 0 });    
   }
 
   componentDidMount() {
-    this.setState({ count: 1 })
-    this.increment(this.state.count)
+    this._retrieveData();
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists reviews (id integer primary key not null, username text);'
       );
     });
+    this.printReview(1);
   }
-
 
   render() {
     return (
-      <ScrollView>
+      <View>
         <View style={{
           flex: 1,
           flexDirection: 'row',
           justifyContent: 'center',
           flexWrap: 'wrap',
           alignItems: 'stretch',}}>
-          <View style={{ height: 40, width: 400 }}/>
-          <View style={{ height: 150, width: 150 }}>
-            {this._maybeRenderImage()}
+          <View style={styles.profile}>
+            <View style={{ height: 150, width: 150 }}>
+              {this._maybeRenderImage()}
+            </View>
+            <View style={{ height: 40, width: 400 }}/>
+            <Text style={styles.bio}>{this.state.bio}</Text>
           </View>
-          <View style={{ height: 40, width: 400 }}/>
-          <Text style={styles.bio}>{this.state.bio}</Text>
-          <View style={{ height: 20, width: 400 }}/>
-          <Text style={styles.title}>do you think this person is...</Text>
+          <Text style={styles.title}>Do you think this person is...</Text>
           <View style={{ height: 150, width: 150 }} >
             {this.renderUsers()}
           </View>
 
         </View>
-      </ScrollView>
+      </View>
     );
   }
 
   _maybeRenderImage = () => {
     let { image } = this.state;
     if (!image) {
-      console.log("why here?");
       return;
     }
 
@@ -412,14 +426,21 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
+    height: 40,
+    width: 400,
     marginTop: 20,
+    textAlign: 'center'
   },
-  bio: {
-    borderRadius: 20,
-    borderWidth: 0.2,
+
+  profile: {
+    borderWidth: 1,
     borderColor: '#c4c7ce',
-    marginTop: 20,
-    padding: 15,
+    marginRight: 50,
+    marginLeft: 50,
+    height: 250,
+    width: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   textYellow: {
     color: '#f8cc1f',

@@ -21,6 +21,7 @@ export default class HomeScreen extends React.Component {
   state = {
     username: '',
     bioreviews: [],
+    image: null,
   }
   static navigationOptions = {
     header: null,
@@ -32,8 +33,13 @@ export default class HomeScreen extends React.Component {
       if (value !== null) {
         // We have data!!
         this.setState({ username: value})
-        console.log("this.sate.username: ", this.state.username);
+        console.log("this.state.username: ", this.state.username);
       }
+      firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
+        const image = snapshot.val().image;
+        this.setState({ image: image});
+      });
+
     } catch (error) {
       // Error retrieving data
     }
@@ -57,11 +63,31 @@ export default class HomeScreen extends React.Component {
 
   }
 
+  showPoints = () => {
+    var points;
+
+    firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
+
+        if (snapshot.val() != null) {
+          points = snapshot.val().points;
+          console.log("points: ", points);
+        } else {
+          points = 0;
+        }
+    });
+
+    return (
+      <Text> Points: {points} </Text>
+    );
+
+  }
+
   componentDidMount() {
     this._retrieveData();
   }
 
   render() {
+    let { image } = this.state;
     return (
       <View style={styles.container}>
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -78,13 +104,16 @@ export default class HomeScreen extends React.Component {
 
           <View style={styles.getStartedContainer}>
             <Text style={styles.getStartedText}>
-              Welcome, {this.state.username} !
+              Welcome, {this.state.username}!
             </Text>
+            {this._maybeRenderImage()}
+
           </View>
         </ScrollView>
 
         <View style={styles.bottom}>
           { this.showReviews() }
+          { this.showPoints() }
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
             style={styles.button}>
@@ -94,6 +123,41 @@ export default class HomeScreen extends React.Component {
       </View>
     );
   }
+
+  
+  _maybeRenderImage = () => {
+    let { image } = this.state;
+    if (!image) {
+      return;
+    }
+
+    return (
+      <View
+        style={{
+          marginTop: 30,
+          width: 250,
+          borderRadius: 3,
+          elevation: 2,
+        }}>
+        <View
+          style={{
+            borderTopRightRadius: 3,
+            borderTopLeftRadius: 3,
+            shadowColor: 'rgba(0,0,0,1)',
+            shadowOpacity: 0.2,
+            shadowOffset: { width: 4, height: 4 },
+            shadowRadius: 5,
+            overflow: 'hidden',
+          }}>
+          <Image source={{ uri: image }} style={{ width: 150, height: 150 }} />
+        </View>
+
+        <Text
+          style={{ paddingVertical: 10, paddingHorizontal: 10 }}>
+        </Text>
+      </View>
+    );
+  };
 
   _handleLearnMorePress = () => {
     WebBrowser.openBrowserAsync('https://docs.expo.io/versions/latest/guides/development-mode');

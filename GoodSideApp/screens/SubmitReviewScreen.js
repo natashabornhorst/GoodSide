@@ -26,6 +26,7 @@ export default class SubmitReviewScreen extends React.Component {
     confirmPassword: '',
     image: null,
     uploading: false,
+    bio: ''
   }
 
   handleBio = (text) => {
@@ -33,16 +34,28 @@ export default class SubmitReviewScreen extends React.Component {
   }
 
   submit = () => {
-        // is text empty?
+    var points;
+
+    firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
+
+        if (snapshot.val() != null) {
+          points = snapshot.val().points;
+        } else {
+          points = 0;
+        }
+    });
+
     if (this.state.bio === null || this.state.bio === '') {
       alert('Please enter a bio')
       return false;
     } else if (this.state.image === null || this.state.image === '') {
       alert('Please choose a pic')
       return false;
+    } else if (points < 500) {
+      alert("You need " + (500-points) + " more points before you can request a reveiw");
+      return false;
     }
 
-    console.log("username: ", this.state.username);
     db.transaction(
       tx => {
         tx.executeSql('insert into reviews (username) values (?)', [this.state.username]);
@@ -58,6 +71,12 @@ export default class SubmitReviewScreen extends React.Component {
       bio: this.state.bio,
       image: this.state.image
     });
+
+    //delete fields:
+    this.setState({ bio: '' });
+    this.setState({ image: null });
+    alert('Your request has been submitted!');
+
   }
 
   _retrieveData = async () => {

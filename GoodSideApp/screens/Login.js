@@ -77,7 +77,7 @@ export default class Login extends React.Component {
         </View>
 
         <View style={styles.bottom}>
-          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' rightIcon={{ type: 'font-awesome', name: 'envelope', color: '#f8cc1f' }}/>
+          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='username' rightIcon={{ type: 'font-awesome', name: 'envelope', color: '#f8cc1f' }}/>
           <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' rightIcon={{ type: 'font-awesome', name: 'lock', color: '#f8cc1f', size: 30 }}/>
           <TouchableOpacity 
             onPress = {() => this.signin(this.state.username, this.state.password)}
