@@ -22,6 +22,7 @@ export default class HomeScreen extends React.Component {
     username: '',
     bioreviews: [],
     image: null,
+    name: ''
   }
   static navigationOptions = {
     header: null,
@@ -37,7 +38,9 @@ export default class HomeScreen extends React.Component {
       }
       firebase.database().ref('users/' + this.state.username).on('value', (snapshot) => {
         const image = snapshot.val().image;
+        const name = snapshot.val().name;
         this.setState({ image: image});
+        this.setState({ name: name})
       });
 
     } catch (error) {
@@ -102,7 +105,7 @@ export default class HomeScreen extends React.Component {
 
           <View style={styles.getStartedContainer}>
             <Text style={styles.headerText}>
-              {this.state.username}
+              {this.state.name}
             </Text>
           </View>
         </View>

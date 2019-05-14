@@ -146,16 +146,17 @@ export default class ReviewScreen extends React.Component {
   } 
 
   renderUsers = () => {
-    if (this.state.currentIndex > 4) {
-      return (
-        <TouchableOpacity 
-            onPress = {() => this.printReview(this.state.count)}
-            style={styles.button}>
-            <Text style={styles.text}> next </Text>
-        </TouchableOpacity>   
-      );   
+    if (this._isMounted) {
+      if (this.state.currentIndex > 4) {
+        return (
+          <TouchableOpacity 
+              onPress = {() => this.printReview(this.state.count)}
+              style={styles.button}>
+              <Text style={styles.text}> next </Text>
+          </TouchableOpacity>   
+        );   
+      }
     }
-
     return Users.map((item, i) => {
       if (i < this.state.currentIndex) {
         return null
