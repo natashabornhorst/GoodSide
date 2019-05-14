@@ -1,5 +1,6 @@
 import React from 'react';
-import { Input, Icon } from 'react-native-elements'
+import { Input, Icon, CheckBox } from 'react-native-elements'
+import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
 import {
   ActivityIndicator,
   Button,
@@ -19,6 +20,17 @@ import uuid from 'uuid';
 import firebase from '../global/Firebase.js';
 
 console.disableYellowBox = true;
+var gender_props = [
+  {label: 'female', value: 0 },
+  {label: 'male', value: 1 },
+  {label: 'other', value: 2 },
+];
+
+var gender_pref_props = [
+  {label: 'female', value: 0 },
+  {label: 'male', value: 1 },
+  {label: 'other', value: 2 },
+];
 
 export default class App extends React.Component {
   state = {
@@ -28,8 +40,9 @@ export default class App extends React.Component {
     username: '',
     password: '',
     confirmPassword: '',
+    gender: '',
+    targetGender: ''
   };
-
 
   handleName = (text) => {
     this.setState({ name: text })
@@ -65,7 +78,9 @@ export default class App extends React.Component {
         name: name,
         password: password,
         points: 0,
-        image: this.state.image
+        image: this.state.image,
+        gender: this.state.gender,
+        targetGender: this.state.targetGender
       });
 
       this.props.navigation.navigate('Login');
@@ -92,6 +107,30 @@ export default class App extends React.Component {
           <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='username' />
           <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
           <Input secureTextEntry={true} onChangeText = {this.handleConfirmPassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
+          <View style={{marginBottom: 20, marginTop: 20}}>
+            <Text> What gender do you identify as? </Text>
+            <RadioForm
+              radio_props={gender_props}
+              initial={0}
+              formHorizontal={true}
+              labelHorizontal={true}
+              buttonColor={'#f8cc1f'}
+              selectedButtonColor={'#f8cc1f'}
+              onPress={(value) => {this.setState({gender:value})}}
+            />
+          </View>
+          <View style={{marginBottom: 20, marginTop: 20}}>
+            <Text> Who are you looking for? </Text>
+            <RadioForm
+              radio_props={gender_pref_props}
+              initial={0}
+              formHorizontal={true}
+              labelHorizontal={true}
+              buttonColor={'#f8cc1f'}
+              selectedButtonColor={'#f8cc1f'}
+              onPress={(value) => {this.setState({targetGender:value})}}
+            />
+          </View>
           <Text> upload a picture </Text>
           <Icon type='font-awesome' name='upload' onPress={this._pickImage} color='#f8cc1f'/>
           {this._maybeRenderImage()}
