@@ -77,7 +77,7 @@ export default class HomeScreen extends React.Component {
     });
 
     return (
-      <Text> Points: {points} </Text>
+      <Text style={styles.pText}> Points: {points} </Text>
     );
 
   }
@@ -90,30 +90,25 @@ export default class HomeScreen extends React.Component {
     let { image } = this.state;
     return (
       <View style={styles.container}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.welcomeContainer}>
-            <Image
-              source={
-                __DEV__
-                  ? require('../assets/images/robot-dev.png')
-                  : require('../assets/images/robot-prod.png')
-              }
-              style={styles.welcomeImage}
-            />
+        <View style={{
+          flex: 1,
+          flexDirection: 'row',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          alignItems: 'stretch',}}>
+          <View style={{marginLeft: 100, marginTop: 50}}>
+            {this._maybeRenderImage()}
           </View>
 
           <View style={styles.getStartedContainer}>
-            <Text style={styles.getStartedText}>
-              Welcome, {this.state.username}!
+            <Text style={styles.headerText}>
+              {this.state.username}
             </Text>
-            {this._maybeRenderImage()}
-
           </View>
-        </ScrollView>
-
+        </View>
+        { this.showPoints() }
         <View style={styles.bottom}>
           { this.showReviews() }
-          { this.showPoints() }
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
             style={styles.button}>
@@ -124,7 +119,7 @@ export default class HomeScreen extends React.Component {
     );
   }
 
-  
+
   _maybeRenderImage = () => {
     let { image } = this.state;
     if (!image) {
@@ -149,7 +144,7 @@ export default class HomeScreen extends React.Component {
             shadowRadius: 5,
             overflow: 'hidden',
           }}>
-          <Image source={{ uri: image }} style={{ width: 150, height: 150 }} />
+          <Image source={{ uri: image }} style={{width: 150, height: 150, borderRadius: 150/ 2}}  />
         </View>
 
         <Text
@@ -203,6 +198,7 @@ const styles = StyleSheet.create({
     paddingTop: 30,
   },
   welcomeContainer: {
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 20,
@@ -229,8 +225,14 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     paddingHorizontal: 4,
   },
-  getStartedText: {
-    fontSize: 17,
+  headerText: {
+    fontSize: 30,
+    color: 'rgba(96,100,109, 1)',
+    lineHeight: 34,
+    textAlign: 'center',
+  },
+  pText: {
+    fontSize: 20,
     color: 'rgba(96,100,109, 1)',
     lineHeight: 24,
     textAlign: 'center',
