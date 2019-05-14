@@ -108,11 +108,15 @@ export default class HomeScreen extends React.Component {
         </View>
         { this.showPoints() }
         <View style={styles.bottom}>
-          { this.showReviews() }
+          <TouchableOpacity
+            onPress={() => this.showReviews()}
+            style={styles.button}>
+            <Text style={styles.text}> See Reviews </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('Login')} 
-            style={styles.button}>
-            <Text style={styles.text}> Sign Out </Text>
+            style={styles.buttonWhite}>
+            <Text style={styles.textYellow}> Sign Out </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -177,6 +181,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 20
+  },
+  buttonWhite: {
+    backgroundColor: '#fff',
+    width: 300,
+    height: 50,
+    borderRadius: 20,
+    borderWidth: 0.5,
+    borderColor: '#f8cc1f',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20
   },
   text: {
     color: '#fff',
@@ -275,5 +291,8 @@ const styles = StyleSheet.create({
   helpLinkText: {
     fontSize: 14,
     color: '#2e78b7',
+  },
+  textYellow: {
+    color: '#f8cc1f',
   },
 });

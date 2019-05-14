@@ -89,7 +89,7 @@ export default class App extends React.Component {
         <View style={styles.bottom}>
           <ScrollView>
           <Input onChangeText = {this.handleName} containerStyle={styles.inputField} shake={true} placeholder='full name' />
-          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='email' />
+          <Input onChangeText = {this.handleUsername} containerStyle={styles.inputField} shake={true} placeholder='username' />
           <Input secureTextEntry={true} onChangeText = {this.handlePassword} containerStyle={styles.inputField} shake={true} placeholder='password' />
           <Input secureTextEntry={true} onChangeText = {this.handleConfirmPassword} containerStyle={styles.inputField} shake={true} placeholder='confirm password' />
           <Text> upload a picture </Text>

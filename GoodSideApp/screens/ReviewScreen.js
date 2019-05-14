@@ -33,7 +33,8 @@ const Users = [
 ]
 
 export default class ReviewScreen extends React.Component {
-  
+  _isMounted = false;
+
   state = {
     count: 1,
     bio: '',
@@ -134,8 +135,10 @@ export default class ReviewScreen extends React.Component {
       const value = await AsyncStorage.getItem('username');
       if (value !== null) {
         // We have data!!
-        this.setState({ userusername: value})
-        console.log("this.state.userusername: ", this.state.userusername);
+        if (this._isMounted) {
+          this.setState({ userusername: value})
+          console.log("this.state.userusername: ", this.state.userusername);
+        }
       }
     } catch (error) {
       // Error retrieving data
@@ -249,13 +252,20 @@ export default class ReviewScreen extends React.Component {
   }
 
   componentDidMount() {
-    this._retrieveData();
+    this._isMounted = true;
     db.transaction(tx => {
       tx.executeSql(
         'create table if not exists reviews (id integer primary key not null, username text);'
       );
     });
-    this.printReview(1);
+    if (this._isMounted) {
+      this._retrieveData();
+      this.printReview(1);
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
   }
 
   render() {
